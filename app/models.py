@@ -18,7 +18,7 @@ class User(db.Model):
         self.weight = weight
         self.daily_goal = weight * 35 if weight is not None else 0
 
-    intakes = db.rellationship('WaterIntake', backref='user', lazy=True)
+    intakes = db.relationship('WaterIntake', backref='user', lazy=True)
 
 
 class WaterIntake(db.Model):
@@ -27,4 +27,4 @@ class WaterIntake(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    date = db.Column(db.Datetime, default=lambda: datetime.now(pytz.timezone('America/Sao_Paulo')), nullable=False)
+    date = db.Column(db.DateTime, default=lambda: datetime.now(pytz.timezone('America/Sao_Paulo')), nullable=False)
