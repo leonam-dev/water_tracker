@@ -1,6 +1,7 @@
-import re
+import re, pytz
 
-from app.models import User
+from datetime import datetime
+from app.models import User, WaterIntake
 from marshmallow import Schema, fields, post_load, pre_load, validates, ValidationError, validates_schema
 
 
@@ -33,3 +34,48 @@ class UserSchema(Schema):
     def make_user(self, data, **kwargs):
         return User(**data)
 
+
+class WaterIntakeBaseSchema(Schema):
+    id = fields.UUID(dump_only=True)
+    user_id = fields.UUID(required=True)
+
+    @post_load
+    def make_user_intake(self, data, **kwargs):
+        data['user_id'] = str(data['user_id'])
+
+        if 'date' in data and isinstance(data['date'], str):
+            data['date'] = datetime.strptime(data['date'], '%d-%m-%Y').date()
+
+        return WaterIntake(**data)
+
+
+class WaterIntakeAddSchema(WaterIntakeBaseSchema):
+    amount = fields.Float(required=True)
+    date = fields.DateTime(dump_only=True, format="%d-%m-%Y %H:%M:%S")
+
+    @validates('amount')
+    def validate_amout(self, value):
+        if value <= 0:
+            raise ValidationError('Amount must be greater than zero.')
+
+
+class WaterIntakeRetrieverSchema(WaterIntakeBaseSchema):
+    amount = fields.Float(required=False)
+    date = fields.Str(required=False)
+
+    @pre_load
+    def process_date(self, data, **kwargs):
+        if not data['date']:
+            data['date'] = datetime.now(pytz.timezone('America/Sao_Paulo')).date().strftime('%d-%m-%Y')
+        return data
+    
+    @validates('date')
+    def validate_date(self, value):
+        try:
+            date = datetime.strptime(value, '%d-%m-%Y').date()
+        except:
+            raise ValidationError('Invalid date. The correct format is DD-MM-YYY.')
+        
+        today = datetime.now().date()
+        if date > today:
+            raise ValidationError('The date cannot be in the future.')

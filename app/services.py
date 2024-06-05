@@ -41,7 +41,7 @@ class WaterIntakeService:
         return {
             'total_intake': total_intake,
             'remaining': remaining,
-            'percentage': percentage,
+            'percentage': round(percentage, 2),
             'goal': user.daily_goal,
             'achieved': achieved
         }
